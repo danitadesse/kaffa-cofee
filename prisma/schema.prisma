@@ -1,0 +1,90 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  role         String   @default("customer")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  orders       Order[]
+}
+
+model Product {
+  id              String      @id @default(cuid())
+  slug            String      @unique
+  name            String
+  origin          String
+  process         String
+  roast           String
+  description     String
+  tastingNotes    String
+  hue             Int         @default(24)
+  featured        Boolean     @default(false)
+  active          Boolean     @default(true)
+  retailPriceCents Int
+  retailStock     Int         @default(0)
+  wholesaleEligible Boolean   @default(false)
+  wholesalePriceCents Int      @default(0)
+  wholesaleStock  Int         @default(0)
+  createdAt       DateTime    @default(now())
+  orderItems      OrderItem[]
+}
+
+model Order {
+  id            String       @id @default(cuid())
+  orderNo       String       @unique
+  userId        String
+  user          User         @relation(fields: [userId], references: [id])
+  buyerType     String       @default("retail")
+  status        String       @default("placed")
+  name          String
+  email         String
+  phone         String
+  city          String
+  addressLine   String
+  subtotalCents Int
+  shippingCents Int
+  totalCents    Int
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  items         OrderItem[]
+  events        OrderEvent[]
+
+  @@index([userId])
+  @@index([status])
+}
+
+model OrderItem {
+  id            String   @id @default(cuid())
+  orderId       String
+  order         Order    @relation(fields: [orderId], references: [id])
+  productId     String
+  product       Product  @relation(fields: [productId], references: [id])
+  productName   String
+  priceType     String
+  unitPriceCents Int
+  qty           Int
+  lineTotalCents Int
+
+  @@index([orderId])
+}
+
+model OrderEvent {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id])
+  status    String
+  message   String
+  createdAt DateTime @default(now())
+
+  @@index([orderId])
+}
